@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
 from datetime import date
 from typing import Literal, Optional
@@ -42,6 +44,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="GlowLog", lifespan=lifespan)
 
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def index():
+    return (Path(__file__).parent / "static" / "index.html").read_text(encoding="utf-8")
 
 class ProductIn(BaseModel):
     name: str = Field(min_length=2, max_length=100)
