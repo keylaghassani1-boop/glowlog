@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - glowlog-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: ./app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT}:8000"
+    environment:
+      DB_HOST: db
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - glowlog-net
+
+  adminer:
+    image: adminer:4.8.1
+    profiles: ["tools"]
+    ports:
+      - "${ADMINER_PORT}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - glowlog-net
+
+networks:
+  glowlog-net:
+
+volumes:
+  pgdata:
